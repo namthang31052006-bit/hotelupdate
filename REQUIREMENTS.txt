@@ -1,0 +1,18 @@
+LUMISTAY - WEBSITE ĐẶT PHÒNG KHÁCH SẠN
+
+Cách chạy:
+1. Giải nén file hotel-booking.zip.
+2. Mở file index.html bằng Chrome, Edge hoặc Firefox.
+
+Cấu trúc:
+- index.html: Nội dung website.
+- style.css: Giao diện và responsive.
+- script.js: Tìm kiếm, lọc, lưu phòng và đặt phòng.
+- assets/: Ảnh khách sạn.
+
+Responsive và tùy chọn người dùng:
+- Mobile-first: lưới 1 cột, khoảng cách 10px.
+- Tablet từ 772px: lưới 2 cột, figure hình tròn, figure cuối chiếm 2 cột.
+- Màn hình lớn từ 992px: mỗi figure thứ ba chiếm 2 cột và không bo góc.
+- prefers-reduced-motion: loại bỏ cuộn mượt, animation và transition.
+- prefers-color-scheme: dark: nền figure tối, chữ sáng và viền đen.

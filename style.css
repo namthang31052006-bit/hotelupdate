@@ -1,0 +1,132 @@
+const searchForm = document.querySelector("#searchForm");
+const destinationInput = document.querySelector("#destination");
+const checkinInput = document.querySelector("#checkin");
+const checkoutInput = document.querySelector("#checkout");
+const guestsInput = document.querySelector("#guests");
+const hotelCards = [...document.querySelectorAll(".hotel-card")];
+const filterButtons = [...document.querySelectorAll(".filter")];
+const resultText = document.querySelector("#resultText");
+const emptyState = document.querySelector("#emptyState");
+const toast = document.querySelector("#toast");
+const modal = document.querySelector("#bookingModal");
+const bookingForm = document.querySelector("#bookingForm");
+let activeFilter = "all";
+let selectedPrice = 0;
+
+const today = new Date();
+const tomorrow = new Date(today);
+const dayAfter = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
+dayAfter.setDate(today.getDate() + 2);
+
+function toDateValue(date) {
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60000).toISOString().split("T")[0];
+}
+
+checkinInput.min = toDateValue(today);
+checkoutInput.min = toDateValue(tomorrow);
+checkinInput.value = toDateValue(tomorrow);
+checkoutInput.value = toDateValue(dayAfter);
+
+checkinInput.addEventListener("change", () => {
+  const nextDay = new Date(`${checkinInput.value}T00:00:00`);
+  nextDay.setDate(nextDay.getDate() + 1);
+  checkoutInput.min = toDateValue(nextDay);
+  if (!checkoutInput.value || new Date(checkoutInput.value) <= new Date(checkinInput.value)) {
+    checkoutInput.value = toDateValue(nextDay);
+  }
+});
+
+function normalize(value) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function applyFilters() {
+  const destination = normalize(destinationInput.value);
+  let visible = 0;
+
+  hotelCards.forEach((card) => {
+    const matchesCategory = activeFilter === "all" || card.dataset.category === activeFilter;
+    const matchesDestination = !destination || normalize(card.dataset.location).includes(destination);
+    const show = matchesCategory && matchesDestination;
+    card.classList.toggle("hidden", !show);
+    if (show) visible += 1;
+  });
+
+  resultText.textContent = `${visible} chỗ nghỉ phù hợp`;
+  emptyState.style.display = visible ? "none" : "block";
+}
+
+filterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    filterButtons.forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    activeFilter = button.dataset.filter;
+    applyFilters();
+  });
+});
+
+searchForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  applyFilters();
+  document.querySelector("#rooms").scrollIntoView();
+});
+
+let toastTimer;
+function showToast(message) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("show");
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+}
+
+const savedCount = document.querySelector("#savedCount");
+document.querySelectorAll(".save-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    button.classList.toggle("saved");
+    const count = document.querySelectorAll(".save-button.saved").length;
+    savedCount.textContent = count;
+    savedCount.style.display = count ? "block" : "none";
+    showToast(button.classList.contains("saved") ? "Đã lưu chỗ nghỉ" : "Đã bỏ khỏi danh sách lưu");
+  });
+});
+
+function getNights() {
+  const start = new Date(`${checkinInput.value}T00:00:00`);
+  const end = new Date(`${checkoutInput.value}T00:00:00`);
+  const nights = Math.round((end - start) / 86400000);
+  return Number.isFinite(nights) && nights > 0 ? nights : 1;
+}
+
+document.querySelectorAll(".book-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    selectedPrice = Number(button.dataset.price);
+    const nights = getNights();
+    document.querySelector("#modalHotel").textContent = button.dataset.hotel;
+    document.querySelector("#modalDates").textContent = `${nights} đêm`;
+    document.querySelector("#modalGuests").textContent = guestsInput.options[guestsInput.selectedIndex].text;
+    document.querySelector("#modalTotal").textContent = `${(selectedPrice * nights).toLocaleString("vi-VN")}đ`;
+    modal.showModal();
+  });
+});
+
+bookingForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const guestName = document.querySelector("#guestName").value.trim();
+  if (!bookingForm.reportValidity()) return;
+  modal.close();
+  bookingForm.reset();
+  showToast(`Đặt phòng thành công cho ${guestName}`);
+});
+
+document.querySelector("#modalClose").addEventListener("click", () => modal.close());
+
+document.querySelector("#loginButton").addEventListener("click", () => {
+  showToast("Tính năng đăng nhập đang được cập nhật");
+});
+
+document.querySelector("#savedButton").addEventListener("click", () => {
+  const count = document.querySelectorAll(".save-button.saved").length;
+  showToast(count ? `Bạn đã lưu ${count} chỗ nghỉ` : "Bạn chưa lưu chỗ nghỉ nào");
+});
